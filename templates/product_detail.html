@@ -1,0 +1,192 @@
+{% extends 'base_product_detail.html' %}
+
+{% block title %}商品詳細 - {{ product.goods.goodsnm }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- 商品名ヘッダー -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center bg-light">
+                    <h3 class="mb-2">{{ product.goods.goodsnm }}</h3>
+                    {% if product.goods.title %}
+                    <p class="text-muted mb-0">{{ product.goods.title }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- 左列 -->
+        <div class="col-lg-6">
+            <!-- 基本情報 -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>基本情報</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            <tr>
+                                <th class="text-muted" style="width: 35%;">商品ID</th>
+                                <td><code class="fs-6">{{ product.goodsid }}</code></td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">カラー</th>
+                                <td>
+                                    <span class="badge bg-info fs-6">{{ product.colorid }}</span>
+                                    <span class="ms-2">{{ colorid_connect_color(product.colorid) }}</span>
+                                </td>
+                            </tr>
+                            {% if product.goods.htpmark %}
+                            <tr>
+                                <th class="text-muted">評価</th>
+                                <td><span class="text-warning fs-5">{{ product.goods.htpmark }}</span></td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 価格情報 -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-currency-yen me-2"></i>価格情報</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            <tr>
+                                <th class="text-muted" style="width: 35%;">定価</th>
+                                <td><strong class="fs-4">¥{{ "{:,}".format(product.goods.price|int) if product.goods.price else '未設定' }}</strong></td>
+                            </tr>
+                            {% if product.goods.currentprice %}
+                            <tr>
+                                <th class="text-muted">現在価格</th>
+                                <td><strong class="fs-4 text-danger">¥{{ "{:,}".format(product.goods.currentprice|int) }}</strong></td>
+                            </tr>
+                            {% endif %}
+                            {% if product.price %}
+                            <tr>
+                                <th class="text-muted">仕入れ価格</th>
+                                <td>¥{{ "{:,}".format(product.price|int) }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if product.goods.mailfee %}
+                            <tr>
+                                <th class="text-muted">送料</th>
+                                <td>¥{{ "{:,}".format(product.goods.mailfee|int) }}</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右列 -->
+        <div class="col-lg-6">
+            <!-- 在庫情報 -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="bi bi-box me-2"></i>在庫情報</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            <tr>
+                                <th class="text-muted" style="width: 35%;">在庫数</th>
+                                <td>
+                                    {% set amount = product.amount or 0 %}
+                                    <h4 class="mb-0">
+                                        <span class="badge
+                                            {% if amount > 10 %}bg-success
+                                            {% elif amount > 0 %}bg-warning text-dark
+                                            {% else %}bg-danger
+                                            {% endif %}">
+                                            {% if amount > 0 %}
+                                                {{ amount }} 個
+                                            {% else %}
+                                                品切れ
+                                            {% endif %}
+                                        </span>
+                                    </h4>
+                                </td>
+                            </tr>
+                            {% if product.sold %}
+                            <tr>
+                                <th class="text-muted">販売済み</th>
+                                <td>{{ product.sold }} 個</td>
+                            </tr>
+                            {% endif %}
+                            {% if product.material %}
+                            <tr>
+                                <th class="text-muted">素材</th>
+                                <td>{{ product.material }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if product.ftrndate %}
+                            <tr>
+                                <th class="text-muted">入荷日</th>
+                                <td>{{ product.ftrndate }}</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- システム情報 -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>システム情報</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            <tr>
+                                <th class="text-muted" style="width: 35%;">登録日時</th>
+                                <td>{{ product.fentdt if product.fentdt else '未設定' }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">最終更新日時</th>
+                                <td>{{ product.fupdtedt if product.fupdtedt else '未設定' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 詳細・備考（フル幅） -->
+    {% if product.goods.detail or product.remark %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-file-text me-2"></i>詳細・備考</h5>
+                </div>
+                <div class="card-body">
+                    {% if product.goods.detail %}
+                    <div class="mb-3">
+                        <h6 class="text-muted">商品詳細</h6>
+                        <p class="mb-0">{{ product.goods.detail }}</p>
+                    </div>
+                    {% endif %}
+                    {% if product.remark %}
+                    <div>
+                        <h6 class="text-muted">コメント</h6>
+                        <p class="mb-0">{{ product.remark }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

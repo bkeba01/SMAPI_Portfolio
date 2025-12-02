@@ -1,0 +1,288 @@
+/* General Body and Container Styles */
+/* General Body Styles */
+:root {
+    --color-primary: #D9885B; /* 主要な要素の色（ボタン、リンク、見出しなど） */
+    --color-sub-primary: #E0E0E0; /* 補助的な要素の色 */
+    --color-text: #333333; /* テキストの色 */
+    --color-background: #F8F8F8; /* 背景色 */
+    --color-primary-hover: #C27A4F; /* 主要な要素のホバー時の色 */
+    --color-sub-primary-hover: #C0C0C0; /* 補助的な要素のホバー時の色 */
+    --color-text-hover: #555555; /* テキストのホバー時の色 */
+    --color-background-hover: #EFEFEF; /* 背景のホバー時の色 */
+}
+body {
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background-color: #F8F9FA; /* Light gray background */
+    color: var(--color-text);
+}
+
+.container {
+    max-width: 1200px;
+}
+
+/* Card Hover Effect (General) */
+.card:hover {
+    transform: translateY(-5px);
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important;
+}
+
+/* Dashboard Specific Styles */
+.dashboard-card {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    height: 100%; /* Ensure cards in a row have equal height */
+}
+
+.dashboard-card .card-body {
+    padding: 25px;
+}
+
+.dashboard-card .card-title {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+    opacity: 0.8;
+}
+
+.dashboard-card .card-text.display-6 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.dashboard-card .icon-large {
+    font-size: 3.5rem;
+    opacity: 0.7;
+}
+
+/* Color adjustments for dashboard cards */
+.dashboard-card.bg-primary {
+    background-color: var(--color-primary) !important; /* New: Dark Blue */
+    color: var(--color-text) !important; /* New: Soft white text */
+}
+.dashboard-card.bg-warning {
+    background-color: var(--color-primary) !important; /* New: Brown */
+    color: var(--color-text) !important; /* New: Soft white text */
+}
+.dashboard-card.bg-danger {
+    background-color: var(--color-primary) !important; /* New: Dark Red */
+    color: var(--color-text) !important; /* New: Soft white text */
+}
+.dashboard-card.bg-info {
+    background-color: var(--color-primary) !important; /* New: Dark Blue (reused for info) */
+    color: var(--color-text) !important; /* New: Soft white text */
+}
+
+/* Quick Action Buttons */
+.dashboard-btn {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 15px 20px;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.dashboard-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+}
+
+/* Button outline colors */
+.btn-outline-primary {
+    color: var(--color-text); /* New: Dark Blue */
+    border-color: var(--color-sub-primary); /* New: Dark Blue */
+    background-color: var(--color-sub-primary); /* New: Dark Blue */
+}
+.btn-outline-primary:hover {
+    background-color: var(--color-background-hover); /* New: Dark Blue */
+    color: var(--color-text-hover); /* New: Soft white text */
+}
+
+.btn-outline-success {
+    color: var(--color-text); /* New: Dark Blue */
+    border-color: var(--color-sub-primary); /* New: Dark Blue */
+    background-color: var(--color-sub-primary); /* New: Dark Blue */
+}
+.btn-outline-success:hover {
+    background-color: var(--color-background-hover); /* New: Dark Blue */
+    color: var(--color-text-hover); /* New: Soft white text */
+}
+
+.btn-outline-info {
+    color: var(--color-text); /* New: Dark Blue */
+    border-color: var(--color-sub-primary); /* New: Dark Blue */
+    background-color: var(--color-sub-primary); /* New: Dark Blue */
+}
+.btn-outline-info:hover {
+    background-color: var(--color-background-hover); /* New: Dark Blue */
+    color: var(--color-text-hover); /* New: Soft white text */
+}
+
+.btn-outline-secondary {
+    color: var(--color-text); /* New: Dark Blue */
+    border-color: var(--color-sub-primary); /* New: Dark Blue */
+    background-color: var(--color-sub-primary); /* New: Dark Blue */
+}
+.btn-outline-secondary:hover {
+    background-color: var(--color-background-hover); /* New: Dark Blue */
+    color: var(--color-text-hover); /* New: Soft white text */
+}
+
+.btn-outline-dark {
+    color: var(--color-text); /* New: Dark Blue */
+    border-color: var(--color-sub-primary); /* New: Dark Blue */
+    background-color: var(--color-sub-primary); /* New: Dark Blue */
+}
+.btn-outline-dark:hover {
+    background-color: var(--color-background-hover); /* New: Dark Blue */
+    color: var(--color-text-hover); /* New: Soft white text */
+}
+
+/* Table Styles for Recent Activity */
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--color-sub-primary); /* New: Brown border */
+}
+
+.table th,
+.table td {
+    padding: 12px 15px;
+    vertical-align: middle;
+}
+
+.table thead th {
+    background-color: var(--color-primary); /* New: Soft white/cream background */
+    border-bottom: 2px solid var(--color-sub-primary); /* New: Brown border */
+    font-weight: 1000;
+    color: var(--color-text); /* New: Dark Blue text */
+}
+
+.table-hover tbody tr:hover
+{
+    background-color: var(--color-background-hover); /* Or the default background color of the table row */
+    color: var(--color-text-hover); /* The default text color for table body cells */
+}
+
+/* Card Header Background */
+.card-header.bg-light
+{
+    background-color: var(--color-primary) !important; /* New: Soft white/cream background */
+    color: var(--color-text) !important; /* New: Dark Blue text */
+    border-bottom: 1px solid var(--color-sub-primary) !important; /* New: Brown border */
+}
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--color-sub-primary); /* New: Brown border */
+    background-color: var(--color-primary);
+}
+
+/* Table Body Text Styling */
+.table tbody tr {
+    color: var(--color-text); /* Light text color for data */
+    font-size: 0.95rem;
+    line-height: 1.2;
+    font-weight: 600;
+}
+.container-fluid
+{
+    color: var(--color-text);
+}
+
+/* Utility Classes */
+.mb-5 {
+    margin-bottom: 3rem !important;
+}
+
+.mt-5 {
+    margin-top: 3rem !important;
+}
+
+.me-2 {
+    margin-right: 0.5rem !important;
+}
+
+.mb-4 {
+    margin-bottom: 1.5rem !important;
+}
+
+.g-4 {
+    --bs-gutter-x: 1.5rem;
+    --bs-gutter-y: 1.5rem;
+}
+
+.g-3 {
+    --bs-gutter-x: 1rem;
+    --bs-gutter-y: 1rem;
+}
+
+
+
+
+
+/* Remove last row border */
+.table tbody tr:last-child {
+    border-bottom: none;
+}
+
+/* Styling for "在庫管理ダッシュボード" heading on home.html */
+h1.display-4 {
+    color: var(--color-primary); /* A prominent color from the theme */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+/* Styling for the Navbar */
+.navbar {
+    background-color: var(--color-text) !important; /* A darker shade from the theme */
+    border-bottom: 1px solid #41354D; /* A subtle border */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-brand {
+    color: var(--color-background) !important; /* Light text for the brand */
+    font-size: 1.6rem;
+    font-weight: 700;
+    padding-left: 15px; /* Add some padding */
+}
+
+.navbar-nav .nav-link {
+    color: var(--color-background) !important; /* Light text for nav links */
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+    background-color: var(--color-sub-primary) !important; /* Highlight color on hover/active */
+    color: var(--color-primary) !important; /* Darker text on hover/active */
+    font-weight: 700 !important; /* Bold text on hover/active */
+}
+
+/* Dropdown menu styling */
+.navbar-nav .dropdown-menu {
+    background-color: var(--color-text); /* M atch navbar background */
+    border: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-nav .dropdown-item {
+    color: var(--color-background); /* Light text for dropdown items */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.navbar-nav .dropdown-item:hover,
+.navbar-nav .dropdown-item.active {
+    background-color: var(--color-sub-primary); /* Highlight color on hover/active */
+    color: var(--color-primary); /* Darker text on hover/active */
+    font-weight: 700 !important; /* Bold text on hover/active */
+}
+
+.navbar-nav .dropdown-divider {
+    border-top: 1px solid rgba(224, 224, 224, 0.2); /* Subtle divider */
+}

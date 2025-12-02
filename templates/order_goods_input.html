@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}
+注文商品登録 - 在庫管理システム
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0"><i class="bi bi-cart-plus-fill me-2"></i>注文商品登録</h2>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted">新しい注文商品を登録します。必須項目をすべて入力してください。</p>
+                    <hr>
+                    <form method="POST" action="{{ url_for('order_goods_input_page') }}" novalidate>
+                        {{ form.hidden_tag() }}
+
+                        <div class="form-check form-switch mb-3">
+                            {{ form.is_sample(class="form-check-input", role="switch", id="is_sample") }}
+                            {{ form.is_sample.label(class="form-check-label", for="is_sample") }}
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                {{ form.goodsid.label(class="form-label") }} <span class="badge bg-danger">必須</span>
+                                {{ form.goodsid(class="form-control" + (" is-invalid" if form.goodsid.errors else "")) }}
+                                {% if form.goodsid.errors %}
+                                    <div class="invalid-feedback">{{ form.goodsid.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                {{ form.goodsnm.label(class="form-label") }}
+                                {{ form.goodsnm(class="form-control" + (" is-invalid" if form.goodsnm.errors else ""), placeholder="商品IDを選択すると自動入力されます", readonly=True) }}
+                                {% if form.goodsnm.errors %}
+                                    <div class="invalid-feedback">{{ form.goodsnm.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                {{ form.colorid.label(class="form-label") }}
+                                {{ form.colorid(class="form-control" + (" is-invalid" if form.colorid.errors else ""), placeholder="例: BLK") }}
+                                {% if form.colorid.errors %}
+                                    <div class="invalid-feedback">{{ form.colorid.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-12">
+                                {{ form.detail.label(class="form-label") }}
+                                {{ form.detail(class="form-control", style="height: 100px", placeholder="注文に関する特記事項など") }}
+                            </div>
+
+                            <div class="col-md-6">
+                                {{ form.quantity.label(class="form-label") }} <span class="badge bg-danger">必須</span>
+                                {{ form.quantity(class="form-control" + (" is-invalid" if form.quantity.errors else ""), type="number", min="1") }}
+                                {% if form.quantity.errors %}
+                                    <div class="invalid-feedback">{{ form.quantity.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                {{ form.fupdteuser.label(class="form-label") }} <span class="badge bg-danger">必須</span>
+                                {{ form.fupdteuser(class="form-control" + (" is-invalid" if form.fupdteuser.errors else ""), placeholder="例: tanaka") }}
+                                {% if form.fupdteuser.errors %}
+                                    <div class="invalid-feedback">{{ form.fupdteuser.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                            <a href="{{ url_for('home_page') }}" class="btn btn-secondary"><i class="bi bi-arrow-left-circle me-2"></i>ホームに戻る</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize Select2
+    $('#goodsid').select2({
+        placeholder: "商品を選択してください",
+        allowClear: true
+    });
+    $('#colorid').select2({
+        placeholder: "カラーを選択してください",
+        allowClear: true
+    });
+
+    // Function to toggle goodsnm readonly state based on checkbox
+    function toggleGoodsnmReadonly() {
+        if ($('#is_sample').is(':checked')) {
+            // Sample mode: goodsnm is editable
+            $('#goodsnm').prop('readonly', false);
+        } else {
+            // Normal mode: goodsnm is readonly
+            $('#goodsnm').prop('readonly', true);
+            // Trigger change to auto-fill goodsnm if a value is already selected
+            $('#goodsid').trigger('change');
+        }
+    }
+
+    // Event listener for the checkbox
+    $('#is_sample').on('change', function() {
+        toggleGoodsnmReadonly();
+    });
+
+    // Event listener for goodsid change (for auto-filling goodsnm)
+    $('#goodsid').on('change', function() {
+        // Only auto-fill if not in sample mode (i.e., goodsnm is readonly)
+        if ($('#goodsnm').prop('readonly')) {
+            var selectedGoodsid = $(this).val();
+            if (selectedGoodsid) {
+                var selectedText = $(this).find('option:selected').text();
+                var goodsnm = selectedText.split(': ')[1] || '';
+                $('#goodsnm').val(goodsnm);
+            } else {
+                $('#goodsnm').val('');
+            }
+        }
+    });
+
+    // Initial state setup on page load
+    toggleGoodsnmReadonly();
+});
+</script>
+{% endblock %}

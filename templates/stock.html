@@ -1,0 +1,404 @@
+{% extends 'base.html' %}
+
+{% block title %}
+在庫一覧 - 在庫管理システム
+{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css">
+<style>
+    .sortable a {
+        color: white;
+        text-decoration: none;
+    }
+    .sortable a:hover {
+        color: #ddd;
+    }
+    .sortable .sort-icon {
+        margin-left: 5px;
+        color: #ffc107; /* アイコンの色 */
+    }
+    .unregistered-sale-info {
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    .unregistered-sale-info:hover {
+        background-color: #fff3cd; /* A lighter shade of the alert warning color */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    {% if unregistered_sales %}
+    <div class="alert alert-warning" role="alert">
+        <div data-bs-toggle="collapse" href="#unregisteredSalesCollapse" role="button" aria-expanded="false" aria-controls="unregisteredSalesCollapse" class="d-flex justify-content-between align-items-center" style="cursor: pointer;">
+            <h4 class="alert-heading mb-0">未登録商品の販売 ({{ unregistered_sales|length }}件)</h4>
+            <i class="bi bi-chevron-down"></i>
+        </div>
+        <div class="collapse" id="unregisteredSalesCollapse">
+            <hr>
+            <p>今週の月曜日から販売された商品の中に、在庫管理(Arrival)に登録されていない商品があります。</p>
+            {% for sale in unregistered_sales %}
+            <div class="unregistered-sale-item mb-2" id="warning-{{ sale.goodsid }}-{{ sale.colorid }}">
+                <div class="unregistered-sale-info p-2 rounded">
+                    <p class="mb-0">
+                        <strong>商品ID:</strong> {{ sale.goodsid }} |
+                        <strong>商品名:</strong> {{ sale.goodsnm }} |
+                        <strong>カラーID:</strong> {{ sale.colorid }}
+                        <i class="bi bi-hand-index-thumb ms-2"></i>
+                    </p>
+                    <small class="text-muted">クリックして詳細ボタンを表示</small>
+                </div>
+                <button class="btn btn-primary btn-sm product-detail-link mt-2" style="display: none;" data-bs-toggle="modal" data-bs-target="#productDetailModal" data-goodsid="{{ sale.goodsid }}" data-colorid="{{ sale.colorid }}">この商品を詳細</button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="bi bi-search me-2"></i>在庫検索</h2>
+            <form action="{{ url_for('stock_page') }}" method="GET" class="mb-4 p-3 border rounded bg-light">
+                <input type="hidden" name="sort_by" value="{{ sort_by }}">
+                <input type="hidden" name="order" value="{{ order }}">
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label for="search" class="form-label">商品名または商品ID</label>
+                        <input type="text" class="form-control" id="search" name="search" value="{{ request.args.get('search', '') }}" placeholder="商品名または商品IDを入力">
+                    </div>
+                    <div class="col-md-12">
+                        <label for="quantity_range" class="form-label">在庫数範囲</label>
+                        <div class="range-slider-container">
+                            <div class="range-slider" id="quantity-range-slider"　class="range-slider" style="position: relative;"></div>
+                            <div class="range-values">
+                                <span id="min-quantity-display"class="handle-tooltip"></span> 〜 <span id="max-quantity-display"class="handle-tooltip"></span>
+                            </div>
+                            <div class="d-flex align-items-center mt-2">
+                                <input type="number" class="form-control form-control-sm me-2" id="min_quantity_input" placeholder="最小" value="{{ request.args.get('min_quantity', '') }}">
+                                〜
+                                <input type="number" class="form-control form-control-sm ms-2" id="max_quantity_input" placeholder="最大" value="{{ request.args.get('max_quantity', '') }}">
+                            </div>
+                            <input type="hidden" id="min_quantity" name="min_quantity" value="{{ request.args.get('min_quantity', '') }}">
+                            <input type="hidden" id="max_quantity" name="max_quantity" value="{{ request.args.get('max_quantity', '') }}">
+                            <button class="btn btn-outline-secondary mt-2" type="button" id="clear_quantity_range"><i class="bi bi-x-lg"></i> クリア</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 text-end">
+                    <button type="submit" class="btn btn-primary me-2"><i class="bi bi-search me-1"></i>検索</button>
+                    <a href="{{ url_for('stock_page') }}" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i>リセット</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="bi bi-table me-2"></i>在庫商品一覧</h2>
+            {% if search_text or min_quantity or max_quantity %}
+            <p class="text-muted">
+                検索件数: <strong>{{ total_count }}</strong> 件
+            </p>
+            {% endif %}
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('clear_cache_route') }}" class="btn btn-info loading-trigger"><i class="bi bi-arrow-clockwise"></i> 最新の情報に更新</a>
+            <p class="text-muted mt-2">最終更新: {{ last_updated }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th scope="col" class="sortable">
+                                <a href="{{ url_for('stock_page', page=pagination.page, search=search_text, min_quantity=min_quantity, max_quantity=max_quantity, sort_by='goodsid', order='desc' if sort_by == 'goodsid' and order == 'asc' else 'asc') }}">
+                                    商品ID
+                                    {% if sort_by == 'goodsid' %}
+                                        <i class="bi {{ 'bi-arrow-up' if order == 'asc' else 'bi-arrow-down' }} sort-icon"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th scope="col" class="sortable">
+                                <a href="{{ url_for('stock_page', page=pagination.page, search=search_text, min_quantity=min_quantity, max_quantity=max_quantity, sort_by='goodsnm', order='desc' if sort_by == 'goodsnm' and order == 'asc' else 'asc') }}">
+                                    商品名
+                                    {% if sort_by == 'goodsnm' %}
+                                        <i class="bi {{ 'bi-arrow-up' if order == 'asc' else 'bi-arrow-down' }} sort-icon"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th scope="col">色</th>
+                            <th scope="col" class="sortable">
+                                <a href="{{ url_for('stock_page', page=pagination.page, search=search_text, min_quantity=min_quantity, max_quantity=max_quantity, sort_by='amount', order='desc' if sort_by == 'amount' and order == 'asc' else 'asc') }}">
+                                    在庫数
+                                    {% if sort_by == 'amount' %}
+                                        <i class="bi {{ 'bi-arrow-up' if order == 'asc' else 'bi-arrow-down' }} sort-icon"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th scope="col" class="sortable">
+                                <a href="{{ url_for('stock_page', page=pagination.page, search=search_text, min_quantity=min_quantity, max_quantity=max_quantity, sort_by='fupdtedt', order='desc' if sort_by == 'fupdtedt' and order == 'asc' else 'asc') }}">
+                                    更新日時
+                                    {% if sort_by == 'fupdtedt' %}
+                                        <i class="bi {{ 'bi-arrow-up' if order == 'asc' else 'bi-arrow-down' }} sort-icon"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in arrivals %}
+                        <tr>
+                            <td>{{ item.goodsid }}</td>
+                            <td><a href="#" class="product-detail-link" data-bs-toggle="modal" data-bs-target="#productDetailModal" data-goodsid="{{ item.goodsid }}" data-colorid="{{item.colorid}}">{{ item.goods.title }}</a></td>
+                            <td>{{ colorid_connect_color(item.colorid) }}</td>
+                            <td>
+                                {% set amount = item.amount or 0 %}
+                                <span class="badge 
+                                {% if amount > 10 %}bg-success
+                                {% elif amount > 0 %}bg-warning
+                                {% else %}bg-danger
+                                {% endif %}">
+                                {{ amount if amount > 0 else '品切れ' }}
+                                </span>
+                            </td>
+                            <td>{{ item.fupdtedt if item.fupdtedt else '' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if pagination.has_prev %}
+                        <li class="page-item"><a class="page-link loading-trigger" href="{{ url_for('stock_page', page=pagination.prev_num, search=search_text, min_quantity=min_quantity, max_quantity=max_quantity, sort_by=sort_by, order=order) }}">前へ</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">前へ</span></li>
+                    {% endif %}
+
+                    {% for page_num in pagination.iter_pages() %}
+                        {% if page_num %}
+                            {% if pagination.page == page_num %}
+                                <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                            {% else %}
+                                <li class="page-item"><a class="page-link loading-trigger" href="{{ url_for('stock_page', page=page_num, search=search_text, min_quantity=min_quantity, max_quantity=max_quantity, sort_by=sort_by, order=order) }}">{{ page_num }}</a></li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pagination.has_next %}
+                        <li class="page-item"><a class="page-link loading-trigger" href="{{ url_for('stock_page', page=pagination.next_num, search=search_text, min_quantity=min_quantity, max_quantity=max_quantity, sort_by=sort_by, order=order) }}">次へ</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">次へ</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Product Detail Modal -->
+<div class="modal fade" id="productDetailModal" tabindex="-1" aria-labelledby="productDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="productDetailModalLabel"><i class="bi bi-box-seam me-2"></i>商品詳細</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="productDetailContent" style="max-height: 70vh; overflow-y: auto;">
+                <!-- 商品詳細がここに読み込まれます -->
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">読み込み中...</p>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary btn-lg" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>閉じる
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const minQuantityHiddenInput = document.getElementById('min_quantity');
+    const maxQuantityHiddenInput = document.getElementById('max_quantity');
+    const minQuantityDisplay = document.getElementById('min-quantity-display');
+    const maxQuantityDisplay = document.getElementById('max-quantity-display');
+    const minQuantityTextInput = document.getElementById('min_quantity_input');
+    const maxQuantityTextInput = document.getElementById('max_quantity_input');
+    const quantityRangeSlider = document.getElementById('quantity-range-slider');
+    const clearQuantityRangeButton = document.getElementById('clear_quantity_range');
+
+    const initialMin = parseInt(minQuantityHiddenInput.value) || 0;
+    const initialMax = parseInt(maxQuantityHiddenInput.value) || {{ max_stock_quantity }};
+    
+    if (quantityRangeSlider) {
+        noUiSlider.create(quantityRangeSlider, {
+            start: [initialMin, initialMax],
+            connect: true,
+            range: {
+                'min': 0,
+                'max': {{ max_stock_quantity }}
+            },
+            tooltips: false,
+            format: {
+                to: value => Math.round(value),
+                from: value => Number(value)
+            }
+        });
+
+        const handles = quantityRangeSlider.querySelectorAll('.noUi-handle');
+        const tooltips = [minQuantityDisplay, maxQuantityDisplay];
+
+        // 初期表示を非表示に
+        tooltips.forEach(el => el.style.visibility = 'hidden');
+
+        // 位置更新関数
+        function updateTooltipPosition(index) {
+            const handle = handles[index];
+            const rect = handle.getBoundingClientRect();
+            const parentRect = quantityRangeSlider.getBoundingClientRect();
+            const tooltip = tooltips[index];
+
+            const left = handle.offsetLeft + handle.offsetWidth / 2;
+            tooltip.style.left = `${left}px`;
+        }
+
+        quantityRangeSlider.noUiSlider.on('update', function(values, handle) {
+            const val = Math.round(values[handle]);
+            if (handle === 0) {
+                minQuantityHiddenInput.value = val;
+                minQuantityTextInput.value = val;
+                minQuantityDisplay.textContent = val;
+                updateTooltipPosition(0);
+            } else {
+                maxQuantityHiddenInput.value = val;
+                maxQuantityTextInput.value = val;
+                maxQuantityDisplay.textContent = val;
+                updateTooltipPosition(1);
+            }
+        });
+
+        // ハンドルを掴んだら表示、離したら非表示
+        handles.forEach((handleEl, idx) => {
+            const showTooltip = () => {
+                tooltips[idx].style.visibility = 'visible';
+            };
+            const hideTooltip = () => {
+                tooltips[idx].style.visibility = 'hidden';
+            };
+
+            handleEl.addEventListener('mousedown', showTooltip);
+            handleEl.addEventListener('touchstart', showTooltip);
+
+            handleEl.addEventListener('mouseup', hideTooltip);
+            handleEl.addEventListener('touchend', hideTooltip);
+            handleEl.addEventListener('mouseleave', hideTooltip); // マウスがハンドルから離れたら非表示
+        });
+
+        // テキスト入力変更時にスライダー更新
+        minQuantityTextInput.addEventListener('change', function() {
+            const value = parseInt(this.value) || 0;
+            quantityRangeSlider.noUiSlider.set([value, null]);
+        });
+
+        maxQuantityTextInput.addEventListener('change', function() {
+            const value = parseInt(this.value) || {{ max_stock_quantity }};
+            quantityRangeSlider.noUiSlider.set([null, value]);
+        });
+
+        // クリアボタン
+        if (clearQuantityRangeButton) {
+            clearQuantityRangeButton.addEventListener('click', function() {
+                minQuantityHiddenInput.value = '';
+                maxQuantityHiddenInput.value = '';
+                minQuantityTextInput.value = '';
+                maxQuantityTextInput.value = '';
+                quantityRangeSlider.noUiSlider.set([0, {{ max_stock_quantity }}]);
+
+                const searchForm = clearQuantityRangeButton.closest('form');
+                if (searchForm) searchForm.submit();
+            });
+        }
+    }
+
+    // 商品詳細モーダル関連の処理
+    const productDetailModal = document.getElementById('productDetailModal');
+    const productDetailContent = document.getElementById('productDetailContent');
+
+    document.querySelectorAll('.unregistered-sale-info').forEach(info => {
+        info.addEventListener('click', () => {
+            const container = info.closest('.unregistered-sale-item');
+            const button = container.querySelector('.product-detail-link');
+            if (button) {
+                // Toggle display to allow hiding it again if needed, or just show
+                button.style.display = button.style.display === 'none' ? 'inline-block' : 'none';
+            }
+        });
+    });
+
+    productDetailModal.addEventListener('show.bs.modal', function (event) {
+        // モーダルが開かれる直前に、ローディング表示に切り替える
+        productDetailContent.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">読み込み中...</p>
+            </div>
+        `;
+
+        const button = event.relatedTarget; // クリックされたボタン
+        const goodsid = button.getAttribute('data-goodsid'); // data-goodsid 属性から商品IDを取得
+        const colorid = button.getAttribute('data-colorid');
+
+        // FlaskのAPIエンドポイントから商品詳細を非同期で取得
+        fetch(`/product_detail/${goodsid}/${colorid}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text(); // HTMLとして取得
+            })
+            .then(html => {
+                productDetailContent.innerHTML = html; // モーダルボディにHTMLを挿入
+            })
+            .catch(error => {
+                console.error('商品詳細の取得中にエラーが発生しました:', error);
+                productDetailContent.innerHTML = `<p class="text-danger">商品詳細の読み込みに失敗しました。</p>`;
+            });
+    });
+
+    const unregisteredSalesCollapse = document.getElementById('unregisteredSalesCollapse');
+    if (unregisteredSalesCollapse) {
+        const chevronIcon = document.querySelector('[href="#unregisteredSalesCollapse"] .bi-chevron-down');
+        unregisteredSalesCollapse.addEventListener('show.bs.collapse', function () {
+            if (chevronIcon) {
+                chevronIcon.style.transform = 'rotate(180deg)';
+            }
+        });
+        unregisteredSalesCollapse.addEventListener('hide.bs.collapse', function () {
+            if (chevronIcon) {
+                chevronIcon.style.transform = 'rotate(0deg)';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}経営ダッシュボード{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">経営ダッシュボード</h1>
+
+    <div class="row">
+        <div class="col-md-12">
+            <h2>売上分析グラフ</h2>
+            <div class="row">
+                {% for image in image_results %}
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            {{ image.title }}
+                        </div>
+                        <div class="card-body text-center">
+                            <img src="{{ url_for('static', filename='images/' + image.file) }}" class="img-fluid" alt="{{ image.title }}">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <h2>商品別利益分析</h2>
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>商品ID</th>
+                            <th>商品名</th>
+                            <th>合計売上</th>
+                            <th>合計利益</th>
+                            <th>販売数量</th>
+                            <th>平均販売価格</th>
+                            <th>平均入荷価格</th>
+                            <th>利益率 (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in product_analysis_data %}
+                        <tr>
+                            <td>{{ product.goodsid }}</td>
+                            <td>{{ product.goodsnm }}</td>
+                            <td>{{ "%.2f"|format(product.total_sales) }}</td>
+                            <td>{{ "%.2f"|format(product.total_profit) }}</td>
+                            <td>{{ product.total_amount_sold }}</td>
+                            <td>{{ "%.2f"|format(product.average_sale_price) }}</td>
+                            <td>{{ "%.2f"|format(product.average_arrival_price) }}</td>
+                            <td>{{ "%.2f"|format(product.profit_margin) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

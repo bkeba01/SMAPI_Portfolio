@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+
+{% block title %}
+セット商品登録 - 在庫管理システム
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h2 class="mb-0"><i class="bi bi-plus-square me-2"></i>セット商品登録</h2>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted">セット商品を登録します。セットの親となる商品と、セットを構成する子商品を選択してください。</p>
+                    <hr>
+                    {# 変更点1: JavaScriptに渡すデータをHTMLのdata属性に埋め込む (データアイランド方式) #}
+                    {# これにより、JavaScriptコード内に直接Jinja2構文を埋め込むことによるエラーを回避 #}
+                    <div id="all-goods-data" data-goods='{{ goods_choices_json | safe }}' style="display: none;"></div>
+
+                    <form method="POST" action="{{ url_for('setgoods_input_page') }}" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- 基本情報セクション -->
+                        <h4 class="mb-3">基本情報</h4>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="goodsid" class="form-label">{{ form.goodsid.label }} <span class="badge bg-danger">必須</span></label>
+                                <p class="form-text text-muted small mt-0 mb-1">これから作成するセット商品の「親」となる商品を選択します。</p>
+                                {{ form.goodsid(class="form-control" + (" is-invalid" if form.goodsid.errors else "")) }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="fentuser" class="form-label">{{ form.fentuser.label }} <span class="badge bg-danger">必須</span></label>
+                                <p class="form-text text-muted small mt-0 mb-1">このセット商品を登録する担当者の名前を入力します。</p>
+                                {{ form.fentuser(class="form-control" + (" is-invalid" if form.fentuser.errors else ""), placeholder="例：山田 太郎") }}
+                            </div>
+
+                            <div class="col-12">
+                                <label for="detail" class="form-label">{{ form.detail.label }} <span class="badge bg-secondary">任意</span></label>
+                                <p class="form-text text-muted small mt-0 mb-1">このセット商品の特徴や注意点などを自由に入力できます。</p>
+                                {{ form.detail(class="form-control", placeholder="例：夏限定の特別セットです。", style="height: 100px") }}
+                            </div>
+                        </div>
+
+                        <!-- セット商品構成セクション -->
+                        <h4 class="mb-3">セット商品構成</h4>
+                        <p class="form-text text-muted small mt-0 mb-2">親商品に含まれる「子」商品を選択してください。最低1つは必須です。</p>
+
+                        <div id="set-goods-composition-container">
+                            {% for i in range(1, 11) %}
+                            <div class="card mb-3 set-good-item" id="set-good-item-{{ i }}" {% if i > 1 %}style="display: none;"{% endif %}>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5><span class="badge bg-light text-dark">構成商品 {{i}}</span></h5>
+                                        {% if i > 1 %}
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-set-good-item" data-item-index="{{ i }}">
+                                            <i class="bi bi-dash-circle"></i> 削除
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                    <div class="row g-3 align-items-end">
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                {{ form['scolorid_check' + i|string](class="form-check-input scolorid-checkbox", data_index=i) }}
+                                                <label class="form-check-label" for="{{ 'scolorid_check' + i|string }}">{{ form['scolorid_check' + i|string].label }}</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="{{ 'sgid' + i|string }}" class="form-label">
+                                                {{ form['sgid' + i|string].label }}
+                                                {% if i == 1 %}<span class="badge bg-danger">必須</span>{% else %}<span class="badge bg-secondary optional-badge">任意</span>{% endif %}
+                                            </label>
+                                            {% set field = form['sgid' + i|string] %}
+                                            {{ field(class="form-control sgid-search", data_index=i) }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="scolorid-select-wrapper" id="scolorid-select-wrapper-{{ i }}" style="display: none;">
+                                                <label for="{{ 'scolorid' + i|string }}" class="form-label">カラー</label>
+                                                {{ form['scolorid' + i|string](class="form-control scolorid-select", data_index=i) }}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="{{ 'snum' + i|string }}" class="form-label">{{ form['snum' + i|string].label }}</label>
+                                            {{ form['snum' + i|string](class="form-control", type="number", min="1") }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="{{ 'sgdetail' + i|string }}" class="form-label">{{ form['sgdetail' + i|string].label }}</label>
+                                            {{ form['sgdetail' + i|string](class="form-control", placeholder="特記事項") }}
+                                        </div>
+                                    </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <button type="button" class="btn btn-outline-primary mt-3" id="add-set-good-item">
+                            <i class="bi bi-plus-circle"></i> 構成商品を追加
+                        </button>
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-info btn-lg"><i class="bi bi-check-circle-fill me-2"></i>登録する</button>
+                            <a href="{{ url_for('home_page') }}" class="btn btn-secondary"><i class="bi bi-arrow-left-circle me-2"></i>ホームに戻る</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+//$()は、JQueryの関数である。
+//JQueryとは、JavaScriptのライブラリであり、
+//JavaScriptのコードを簡潔に書くためのもの。
+//documentとは、HTMLドキュメント全体を指す。
+//.readyとは、HTMLドキュメントが完全に読み込まれた後に実行される処理を定義するためのメソッドである。
+//JQueryの書き方は、$(セレクタ).アクション()という形式である。
+//セレクタとは、HTML要素を指定するためのものであり、
+//アクションとは、その要素に対して行う操作を指す。
+$(document).ready(function() {
+    //DOM操作で、HTML要素を取得する
+    const goodsDataElement = document.getElementById('all-goods-data');
+    //JSON.parseとは、JSON形式の文字列をJavaScriptのオブジェクトに変換するためのメソッドである。
+    //Json->JavaScript
+    const allGoods = JSON.parse(goodsDataElement.dataset.goods);
+
+    //initializeSelect2関数は、Select2プラグインを初期化するための関数である。
+    //引数は、セレクタ、プレースホルダー、データの3つである。
+    function initializeSelect2(selector, placeholder, data) {
+        const options = {
+            placeholder: placeholder,
+            allowClear: true,
+            language: "ja"
+        };
+        if (data) {
+            options.data = data;
+        }
+        $(selector).select2(options);
+    }
+
+    // 初期化
+    //#goodsidは、id属性がgoodsidの要素を指すセレクタである。
+    initializeSelect2('#goodsid', "商品を選択してください");
+    // 変更点5: sgid-searchの初期化時にallGoodsデータを渡す
+    //.sgid-searchは、class属性がsgid-searchの要素を指すセレクタである。
+    initializeSelect2('.sgid-search', "構成商品を選択してください", allGoods.map(function(item) { return {id: item[0], text: item[1]}; }));
+    // .scolorid-selectは、class属性がscolorid-selectの要素を指すセレクタである。
+    initializeSelect2('.scolorid-select', "カラーを選択してください");
+
+    let visibleItemCount = 1;
+    // #add-set-good-itemは、id属性がadd-set-good-itemの要素を指すセレクタである
+    //.onは、イベントハンドラを登録するためのメソッドである。
+    //clickイベントに対するハンドラを登録する
+    $('#add-set-good-item').on('click', function() {
+        if (visibleItemCount < 10) {
+            visibleItemCount++;
+            const nextItem = $(`#set-good-item-${visibleItemCount}`);
+            nextItem.show();
+            // 変更点6: 新しく追加されたsgid-searchの初期化時にallGoodsデータを渡す
+            initializeSelect2(nextItem.find('.sgid-search'), "構成商品を選択してください", allGoods.map(function(item) { return {id: item[0], text: item[1]}; }));
+            initializeSelect2(nextItem.find('.scolorid-select'), "カラーを選択してください");
+        }
+        if (visibleItemCount === 10) {
+            $(this).hide();
+        }
+    });
+
+    $(document).on('click', '.remove-set-good-item', function() {
+        //thisは、クリックされた要素を指す
+        //dataは、HTMLのdata属性にアクセスするためのメソッドである。
+        const itemIndex = $(this).data('item-index');
+        const itemToRemove = $(`#set-good-item-${itemIndex}`);
+        
+        itemToRemove.hide();
+        itemToRemove.find('.sgid-search, .scolorid-select').val(null).trigger('change');
+        itemToRemove.find('input[type="number"]').val(1);
+        itemToRemove.find('textarea').val('');
+        itemToRemove.find('.scolorid-checkbox').prop('checked', false);
+        itemToRemove.find('.scolorid-select-wrapper').hide();
+
+        visibleItemCount--;
+        $('#add-set-good-item').show();
+    });
+    //fetchColors関数は、商品IDに基づいてカラーを取得するための関数である。
+    function fetchColors(goodsid, colorSelect) {
+        if (goodsid) {
+            //$.ajaxとは、非同期HTTPリクエストを行うためのメソッドである。
+            //$とは、JQueryの関数である。
+            //$.ajaxは、指定したURLに対して非同期でHTTPリクエストを送信するためのメソッドである。
+            $.ajax({
+                url: `/api/get_colors/${goodsid}`,
+                type: 'GET',
+                //successとは、リクエストが成功した場合に呼び出されるコールバック関数を指定するためのオプションである。
+                success: function(data) {
+                    const select2Data = data.colors.map(function(c) { return { id: c.id, text: c.text }; });
+                    
+                    //colorSelectとは、カラー選択のセレクトボックスを指すjQueryオブジェクトである。
+                    if (colorSelect.data('select2')) {
+                        //destroyメソッドは、select2のインスタンスを破棄するためのメソッドである。
+                        colorSelect.select2('destroy');
+                    }
+
+                    colorSelect.empty().select2({
+                        placeholder: 'カラーを選択',
+                        data: select2Data,
+                        allowClear: true,
+                        language: "ja"
+                    });
+                    colorSelect.val(null).trigger('change');
+
+                    if (select2Data.length > 0) {
+                        colorSelect.closest('.scolorid-select-wrapper').show();
+                    } else {
+                        colorSelect.closest('.scolorid-select-wrapper').hide();
+                    }
+                },
+                error: function() {
+                    console.error("Failed to fetch colors.");
+                    colorSelect.closest('.scolorid-select-wrapper').hide();
+                }
+            });
+        } else {
+            // 変更点8: goodsidがない場合でもカラー選択欄を非表示にせず、選択を促すメッセージを表示
+            if (colorSelect.data('select2')) {
+                colorSelect.select2('destroy');
+            }
+            colorSelect.empty().select2({
+                placeholder: '先に商品を選択',
+                data: [],
+                allowClear: true,
+                language: "ja"
+            });
+        }
+    }
+    //changeとは、要素の値が変更されたときに発生するイベントである。
+    //第二引数は、イベントハンドラを定義するための関数である。
+    //第一引数は、イベントが発生した要素を指す。
+    $(document).on('change', '.scolorid-checkbox', function() {
+        //ここのdataは、引数として渡されたHTML要素のdata属性にアクセスするためのものである。
+        const index = $(this).data('index');
+        const sgidSelect = $(`#sgid${index}`);
+        const colorSelectWrapper = $(`#scolorid-select-wrapper-${index}`);
+        const colorSelect = $(`#scolorid${index}`);
+        const previouslySelectedGoodsid = sgidSelect.val(); // Capture value before clearing
+
+        // 変更点9: select2のインスタンスが存在すれば破棄し、新しいデータで再初期化
+        if (sgidSelect.data('select2')) {
+            sgidSelect.select2('destroy');
+        }
+        sgidSelect.empty();
+
+        if (this.checked) {
+            $.ajax({
+                url: '/api/get_goods_from_arrival',
+                type: 'GET',
+                //ここのfunctionの引数は、サーバーから返されたデータを受け取るためのものである。
+                success: function(data) {
+                    //ここのfunctionのg引数は、サーバーから返されたデータのgoodsプロパティを指す。
+                    const select2Data = data.goods.map(function(g) { return { id: g.id, text: g.text }; });
+                    initializeSelect2(sgidSelect, "構成商品を選択してください", select2Data);
+                    // 変更点10: AJAX完了後にsgidSelectの選択をリセット
+                    sgidSelect.val(null).trigger('change');
+                    console.log("Fetched goods from arrival:", select2Data);
+                    console.log("index", index);
+                },
+                error: function() {
+                    console.error("Failed to fetch goods from arrival.");
+                    initializeSelect2(sgidSelect, "構成商品を選択してください", []);
+                    sgidSelect.val(null).trigger('change');
+                }
+            });
+            colorSelectWrapper.show();
+            // If a product was selected before, fetch its colors
+            if (previouslySelectedGoodsid) {
+                fetchColors(previouslySelectedGoodsid, colorSelect);
+            }
+        } else {
+            // 変更点11: チェックがOFFの場合、全商品リストを復元
+            const initialData = allGoods.map(function(item) { return {id: item[0], text: item[1]}; });
+            initializeSelect2(sgidSelect, "構成商品を選択してください", initialData);
+            colorSelectWrapper.hide();
+            colorSelect.val(null).trigger('change');
+            sgidSelect.val(null).trigger('change');
+        }
+    });
+
+    // 変更点12: sgid-searchのchangeイベントをselect2:selectイベントに変更
+    // select2を使用しているドロップダウンの変更を正確に検知するため
+    $(document).on('select2:select', '.sgid-search', function(e) {
+        //indexは、data-index属性の値を取得するためのものである。
+        //ここのindexは、構成商品1～10のそれぞれに対応するインデックス番号を指す。
+        const index = $(this).data('index');
+        // select2:selectイベントでは、選択されたデータがe.params.dataに含まれる
+        const goodsid = e.params.data.id;
+        //$とは、JQueryの関数であり、DOM要素を操作するためのメソッドである。
+        const colorCheckbox = $(`#scolorid_check${index}`);
+        const colorSelect = $(`#scolorid${index}`);
+        console.log("Selected goodsid:", goodsid, "for index:", index);
+        if (colorCheckbox.is(':checked')) 
+        {
+            fetchColors(goodsid, colorSelect);
+            console.log("Fetching colors for goodsid:", goodsid);
+        }
+    });
+});
+</script>
+{% endblock %}

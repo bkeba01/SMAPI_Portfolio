@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% block title %}販売記録検索{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="display-4 mb-4">
+        <i class="bi bi-search me-2"></i>販売記録検索
+    </h1>
+
+    <!-- 検索フォーム -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-filter me-2"></i>検索条件</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('sales_search_page') }}">
+                {{ form.hidden_tag() }}
+
+                <div class="row g-3">
+                    <!-- オークションID -->
+                    <div class="col-md-4">
+                        <label for="auctionid" class="form-label">オークションID</label>
+                        {{ form.auctionid(class="form-control", placeholder="オークションIDを入力") }}
+                    </div>
+
+                    <!-- 顧客ID -->
+                    <div class="col-md-4">
+                        <label for="guestid" class="form-label">顧客ID</label>
+                        {{ form.guestid(class="form-control", placeholder="顧客IDを入力") }}
+                    </div>
+
+                    <!-- 顧客名 -->
+                    <div class="col-md-4">
+                        <label for="guestnm" class="form-label">顧客名</label>
+                        {{ form.guestnm(class="form-control", placeholder="顧客名を入力") }}
+                    </div>
+
+                    <!-- メールアドレス -->
+                    <div class="col-md-4">
+                        <label for="email" class="form-label">メールアドレス</label>
+                        {{ form.email(class="form-control", placeholder="メールアドレスを入力") }}
+                    </div>
+
+                    <!-- 電話番号 -->
+                    <div class="col-md-4">
+                        <label for="tel" class="form-label">電話番号</label>
+                        {{ form.tel(class="form-control", placeholder="電話番号を入力") }}
+                    </div>
+
+                    <!-- 住所 -->
+                    <div class="col-md-4">
+                        <label for="address" class="form-label">住所</label>
+                        {{ form.address(class="form-control", placeholder="住所を入力") }}
+                    </div>
+
+                    <!-- 商品ID -->
+                    <div class="col-md-4">
+                        <label for="goodsid" class="form-label">商品ID</label>
+                        {{ form.goodsid(class="form-control", placeholder="商品IDを入力") }}
+                    </div>
+
+                    <!-- お問い合わせ番号 -->
+                    <div class="col-md-4">
+                        <label for="trackno" class="form-label">お問い合わせ番号</label>
+                        {{ form.trackno(class="form-control", placeholder="お問い合わせ番号を入力") }}
+                    </div>
+
+                    <!-- 返品Flag -->
+                    <div class="col-md-4">
+                        <label for="returnflg" class="form-label">返品Flag</label>
+                        {{ form.returnflg(class="form-select") }}
+                    </div>
+
+                    <!-- 代引きFlag -->
+                    <div class="col-md-4">
+                        <label for="drawingflg" class="form-label">代引きFlag</label>
+                        {{ form.drawingflg(class="form-select") }}
+                    </div>
+
+                    <!-- 元払いFlag -->
+                    <div class="col-md-4">
+                        <label for="decisionflg" class="form-label">元払いFlag</label>
+                        {{ form.decisionflg(class="form-select") }}
+                    </div>
+                    
+                </div>
+
+                <div class="mt-4">
+                    {{ form.submit(class="btn btn-primary btn-lg") }}
+                    <a href="{{ url_for('sales_search_page') }}" class="btn btn-outline-secondary btn-lg ms-2">クリア</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 検索結果 -->
+    {% if has_search_params %}
+        <div class="card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-table me-2"></i>検索結果</h5>
+                <span class="badge bg-primary">{{ total_count }}件</span>
+            </div>
+            <div class="card-body p-0">
+                {% if sales_records %}
+                    <div class="table-responsive" style="overflow-x: auto;">
+                        <table class="table table-hover table-striped mb-0" style="min-width: 1400px;">
+                            <thead>
+                                <tr>
+                                    <th>オークションID</th>
+                                    <th>顧客ID</th>
+                                    <th>顧客名</th>
+                                    <th>商品ID</th>
+                                    <th>価格</th>
+                                    <th>数量</th>
+                                    <th>振込先</th>
+                                    <th>郵送方法</th>
+                                    <th>お問い合わせ番号</th>
+                                    <th>メールアドレス1</th>
+                                    <th>返品</th>
+                                    <th>代引き</th>
+                                    <th>元払い</th>
+                                    <th>更新日時</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in sales_records %}
+                                <tr style="cursor: pointer;" onclick="window.location='{{ url_for('sales_detail_page', auctionid=record.auctionid, goodsid=record.goodsid, guestid=record.guestid) }}';">
+                                    <td>{{ record.auctionid }}</td>
+                                    <td>{{ record.guestid }}</td>
+                                    <td>{{ record.customer_name if record.customer_name else '-' }}</td>
+                                    <td>{{ record.goodsid }}</td>
+                                    <td>{{ record.price if record.price else '-' }}</td>
+                                    <td>{{ record.amount if record.amount else '-' }}</td>
+                                    <td>{{ record.bank_name if record.bank_name else '-' }}</td>
+                                    <td>{{ record.freight_name if record.freight_name else '-' }}</td>
+                                    <td>{{ record.trackno if record.trackno else '-' }}</td>
+                                    <td>{{ record.email1 if record.email1 else '-' }}</td>
+                                    <td>
+                                        {% if record.returnflg == 'Y' %}
+                                            <span class="badge bg-danger">あり</span>
+                                        {% else %}
+                                            <span class="badge bg-success">なし</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if record.drawingflg == 'Y' %}
+                                            <span class="badge bg-info">あり</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">なし</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if record.decisionflg == '1' %}
+                                            <span class="badge bg-info">あり</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">なし</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ record.fupdtedt if record.fupdtedt else '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ページネーション -->
+                    {% if pagination and pagination.pages > 1 %}
+                        <div class="card-footer">
+                            <nav aria-label="検索結果ページネーション">
+                                <ul class="pagination justify-content-center mb-0">
+                                    <!-- 前へ -->
+                                    {% if pagination.has_prev %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('sales_search_page', page=pagination.prev_num, auctionid=request.args.get('auctionid', ''), guestid=request.args.get('guestid', ''), guestnm=request.args.get('guestnm', ''), email=request.args.get('email', ''), tel=request.args.get('tel', ''), address=request.args.get('address', ''), goodsid=request.args.get('goodsid', ''), trackno=request.args.get('trackno', ''), returnflg=request.args.get('returnflg', ''), drawingflg=request.args.get('drawingflg', ''), decisionflg=request.args.get('decisionflg', '')) }}">前へ</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">前へ</span>
+                                        </li>
+                                    {% endif %}
+
+                                    <!-- ページ番号 -->
+                                    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                        {% if page_num %}
+                                            {% if page_num == pagination.page %}
+                                                <li class="page-item active" aria-current="page">
+                                                    <span class="page-link">{{ page_num }}</span>
+                                                </li>
+                                            {% else %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="{{ url_for('sales_search_page', page=page_num, auctionid=request.args.get('auctionid', ''), guestid=request.args.get('guestid', ''), guestnm=request.args.get('guestnm', ''), email=request.args.get('email', ''), tel=request.args.get('tel', ''), address=request.args.get('address', ''), goodsid=request.args.get('goodsid', ''), trackno=request.args.get('trackno', ''), returnflg=request.args.get('returnflg', ''), drawingflg=request.args.get('drawingflg', ''), decisionflg=request.args.get('decisionflg', '')) }}">{{ page_num }}</a>
+                                                </li>
+                                            {% endif %}
+                                        {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    <!-- 次へ -->
+                                    {% if pagination.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('sales_search_page', page=pagination.next_num, auctionid=request.args.get('auctionid', ''), guestid=request.args.get('guestid', ''), guestnm=request.args.get('guestnm', ''), email=request.args.get('email', ''), tel=request.args.get('tel', ''), address=request.args.get('address', ''), goodsid=request.args.get('goodsid', ''), trackno=request.args.get('trackno', ''), returnflg=request.args.get('returnflg', ''), drawingflg=request.args.get('drawingflg', ''), decisionflg=request.args.get('decisionflg', '')) }}">次へ</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">次へ</span>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                        <p class="mt-3 text-muted">検索条件に一致する販売記録が見つかりませんでした。</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle me-2"></i>検索条件を入力して「検索」ボタンを押してください。
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,481 @@
+{% extends 'base.html' %}
+
+{% block title %}販売記録詳細{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-4">
+            <i class="bi bi-receipt me-2"></i>販売記録詳細
+        </h1>
+        <div>
+            {% if not edit_mode %}
+                <a href="{{ url_for('sales_detail_page', auctionid=record.auctionid, goodsid=record.goodsid, guestid=record.guestid, edit='true') }}" class="btn btn-primary">
+                    <i class="bi bi-pencil me-2"></i>編集
+                </a>
+            {% endif %}
+            <a href="{{ url_for('sales_search_page') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>検索に戻る
+            </a>
+        </div>
+    </div>
+
+    {% if edit_mode %}
+    <form method="POST" action="{{ url_for('sales_detail_page', auctionid=record.auctionid, goodsid=record.goodsid, guestid=record.guestid) }}">
+        {{ form.hidden_tag() }}
+    {% endif %}
+
+    <div class="row">
+        <!-- 販売記録情報 -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>販売情報</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="fw-bold text-muted">オークションID</label>
+                            <p class="fs-5">{{ record.auctionid }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold text-muted">商品ID</label>
+                            <p class="fs-5">{{ record.goodsid }}</p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="fw-bold text-muted">顧客ID</label>
+                            <p class="fs-5">{{ record.guestid }}</p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="fw-bold text-muted">落札価格</label>
+                            {% if edit_mode %}
+                                {{ form.price(class="form-control") }}
+                            {% else %}
+                                <p class="fs-5 text-success">
+                                    {% if record.price %}
+                                        ¥{{ "{:,.0f}".format(record.price) }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="fw-bold text-muted">金額変動あり</label>
+                            {% if edit_mode %}
+                                {{ form.price2(class="form-control") }}
+                            {% else %}
+                                <p class="fs-5 text-warning">
+                                    {% if record.price2 %}
+                                        ¥{{ "{:,.0f}".format(record.price2) }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="fw-bold text-muted">数量</label>
+                            {% if edit_mode %}
+                                {{ form.amount(class="form-control") }}
+                            {% else %}
+                                <p class="fs-5">{{ record.amount if record.amount else '-' }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label class="fw-bold text-muted">商品詳細指定（カラー等）</label>
+                            {% if edit_mode %}
+                                <div class="row g-2 mt-1">
+                                    <div class="col-md-4">
+                                        {{ form.colorid01(class="form-control", placeholder="カラー1") }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ form.colorid02(class="form-control", placeholder="カラー2") }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ form.colorid03(class="form-control", placeholder="カラー3") }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ form.colorid04(class="form-control", placeholder="カラー4") }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ form.colorid05(class="form-control", placeholder="カラー5") }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ form.colorid06(class="form-control", placeholder="カラー6") }}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="d-flex flex-wrap gap-2 mt-2">
+                                    {% if record.colorid01 %}
+                                        <span class="badge bg-info">{{ record.colorid01 }}</span>
+                                    {% endif %}
+                                    {% if record.colorid02 %}
+                                        <span class="badge bg-info">{{ record.colorid02 }}</span>
+                                    {% endif %}
+                                    {% if record.colorid03 %}
+                                        <span class="badge bg-info">{{ record.colorid03 }}</span>
+                                    {% endif %}
+                                    {% if record.colorid04 %}
+                                        <span class="badge bg-info">{{ record.colorid04 }}</span>
+                                    {% endif %}
+                                    {% if record.colorid05 %}
+                                        <span class="badge bg-info">{{ record.colorid05 }}</span>
+                                    {% endif %}
+                                    {% if record.colorid06 %}
+                                        <span class="badge bg-info">{{ record.colorid06 }}</span>
+                                    {% endif %}
+                                    {% if not (record.colorid01 or record.colorid02 or record.colorid03 or record.colorid04 or record.colorid05 or record.colorid06) %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="fw-bold text-muted">振込先</label>
+                            {% if edit_mode %}
+                                {{ form.bankid(class="form-control") }}
+                            {% else %}
+                                <p>
+                                    {% if bank %}
+                                        {{ bank.banknm }}
+                                        {% if record.bankid %}
+                                            <span class="text-muted">({{ record.bankid }})</span>
+                                        {% endif %}
+                                    {% elif record.bankid %}
+                                        {{ record.bankid }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold text-muted">郵送方法</label>
+                            {% if edit_mode %}
+                                {{ form.freightid(class="form-control") }}
+                            {% else %}
+                                <p>
+                                    {% if freight %}
+                                        {{ freight.freightnm }}
+                                        {% if record.freightid %}
+                                            <span class="text-muted">({{ record.freightid }})</span>
+                                        {% endif %}
+                                    {% elif record.freightid %}
+                                        {{ record.freightid }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="fw-bold text-muted">時間帯指定</label>
+                            {% if edit_mode %}
+                                {{ form.time(class="form-control") }}
+                            {% else %}
+                                <p>{{ record.time if record.time else '-' }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold text-muted">お問い合わせ番号</label>
+                            {% if edit_mode %}
+                                {{ form.trackno(class="form-control") }}
+                            {% else %}
+                                <p>{{ record.trackno if record.trackno else '-' }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label class="fw-bold text-muted">備考</label>
+                            {% if edit_mode %}
+                                {{ form.remark(class="form-control", rows=4) }}
+                            {% else %}
+                                <p class="border p-3 bg-light rounded">{{ record.remark if record.remark else '-' }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label class="fw-bold text-muted">会社用 - 問題ありの備考</label>
+                            {% if edit_mode %}
+                                {{ form.problem(class="form-control", rows=4) }}
+                            {% else %}
+                                <p class="border p-3 bg-light rounded">{{ record.problem if record.problem else '-' }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- フラグと日時情報 -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-flag me-2"></i>Flag情報</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="fw-bold text-muted">送信済Flag</label>
+                            {% if edit_mode %}
+                                {{ form.transmitflg(class="form-select") }}
+                            {% else %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" {% if record.transmitflg == 'Y' %}checked{% endif %} disabled>
+                                    <label class="form-check-label">
+                                        {% if record.transmitflg == 'Y' %}
+                                            <span class="text-success fw-bold">送信済</span>
+                                        {% else %}
+                                            <span class="text-muted">未送信</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="fw-bold text-muted d-block">受信済Flag</label>
+                            {% if edit_mode %}
+                                {{ form.answerflg(class="form-select") }}
+                            {% else %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" {% if record.answerflg == 'Y' %}checked{% endif %} disabled>
+                                    <label class="form-check-label">
+                                        {% if record.answerflg == 'Y' %}
+                                            <span class="text-success fw-bold">受信済</span>
+                                        {% else %}
+                                            <span class="text-muted">未受信</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="fw-bold text-muted d-block">振込済Flag</label>
+                            {% if edit_mode %}
+                                {{ form.transferflg(class="form-select") }}
+                            {% else %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" {% if record.transferflg == 'Y' %}checked{% endif %} disabled>
+                                    <label class="form-check-label">
+                                        {% if record.transferflg == 'Y' %}
+                                            <span class="text-success fw-bold">振込済</span>
+                                        {% else %}
+                                            <span class="text-muted">未振込</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="fw-bold text-muted d-block">郵送済Flag</label>
+                            {% if edit_mode %}
+                                {{ form.mailingflg(class="form-select") }}
+                            {% else %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" {% if record.mailingflg == 'Y' %}checked{% endif %} disabled>
+                                    <label class="form-check-label">
+                                        {% if record.mailingflg == 'Y' %}
+                                            <span class="text-success fw-bold">郵送済</span>
+                                        {% else %}
+                                            <span class="text-muted">未郵送</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="fw-bold text-muted">郵送後送信済Flag</label>
+                            {% if edit_mode %}
+                                {{ form.mailsflg(class="form-select") }}
+                            {% else %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" {% if record.mailsflg == 'Y' %}checked{% endif %} disabled>
+                                    <label class="form-check-label">
+                                        {% if record.mailsflg == 'Y' %}
+                                            <span class="text-success fw-bold">送信済</span>
+                                        {% else %}
+                                            <span class="text-muted">未送信</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="fw-bold text-muted">代引きFlag</label>
+                            {% if edit_mode %}
+                                {{ form.drawingflg(class="form-select") }}
+                            {% else %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" {% if record.drawingflg == 'Y' %}checked{% endif %} disabled>
+                                    <label class="form-check-label">
+                                        {% if record.drawingflg == 'Y' %}
+                                            <span class="text-success fw-bold">代引きあり</span>
+                                        {% else %}
+                                            <span class="text-muted">代引きなし</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="fw-bold text-muted">元払いFlag</label>
+                            {% if edit_mode %}
+                                {{ form.decisionflg(class="form-select") }}
+                            {% else %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" {% if record.decisionflg == '1' %}checked{% endif %} disabled>
+                                    <label class="form-check-label">
+                                        {% if record.decisionflg == '1' %}
+                                            <span class="text-success fw-bold">元払いあり</span>
+                                        {% else %}
+                                            <span class="text-muted">元払いなし</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                                
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="fw-bold text-muted">返品Flag</label>
+                            {% if edit_mode %}
+                                {{ form.returnflg(class="form-select") }}
+                            {% else %}
+                                <p>
+                                    {% if record.returnflg == 'Y' %}
+                                        <span class="badge bg-danger">返品あり</span>
+                                    {% else %}
+                                        <span class="badge bg-success">返品なし</span>
+                                    {% endif %}
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="fw-bold text-muted">送信結果</label>
+                            <p class="text-break">{{ record.cache if record.cache else '-' }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="fw-bold text-muted">登録日時</label>
+                            <p>{{ record.fentdt if record.fentdt else '-' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="fw-bold text-muted">更新日時</label>
+                            <p>{{ record.fupdtedt if record.fupdtedt else '-' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold text-muted">更新者</label>
+                            <p>{{ record.fupdteusr if record.fupdteusr else '-' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 顧客情報 -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-person me-2"></i>顧客情報</h5>
+                </div>
+                <div class="card-body">
+                    {% if customer %}
+                        <div class="mb-3">
+                            <label class="fw-bold text-muted">顧客名</label>
+                            <p class="fs-5">{{ customer.guestnm }}</p>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fw-bold text-muted">振込名義（カタカナ）</label>
+                            <p>{{ customer.kadakana if customer.kadakana else '-' }}</p>
+                        </div>
+
+                        <hr>
+
+                        <div class="mb-3">
+                            <label class="fw-bold text-muted">郵便番号</label>
+                            <p>{{ customer.addressno if customer.address else '-' }}</p>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fw-bold text-muted">住所</label>
+                            <p>{{ customer.address if customer.address else '-' }}</p>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fw-bold text-muted">電話番号</label>
+                            <p>{{ customer.tel if customer.tel else '-' }}</p>
+                        </div>
+
+                        <hr>
+
+                        <div class="mb-3">
+                            <label class="fw-bold text-muted">メールアドレス1</label>
+                            <p class="text-break">{{ customer.email1 if customer.email1 else '-' }}</p>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fw-bold text-muted">メールアドレス2</label>
+                            <p class="text-break">{{ customer.email2 if customer.email2 else '-' }}</p>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>この販売記録に関連する顧客情報が見つかりませんでした。
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if edit_mode %}
+    <!-- Form Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="{{ url_for('sales_detail_page', auctionid=record.auctionid, goodsid=record.goodsid, guestid=record.guestid) }}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle me-2"></i>キャンセル
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-2"></i>保存
+                </button>
+            </div>
+        </div>
+    </div>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

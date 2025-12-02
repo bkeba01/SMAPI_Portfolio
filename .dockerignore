@@ -1,0 +1,11 @@
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.vscode
+.git
+.gitignore
+my-flask-app.tar
+Dockerfile
+.dockerignore

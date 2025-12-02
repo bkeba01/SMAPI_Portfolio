@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}
+一括納品処理 - 在庫管理システム
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4"><i class="bi bi-truck me-2"></i>一括納品処理</h2>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">納品期間の指定</h5>
+        </div>
+        <div class="card-body">
+            {% if not min_ship_date %}
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle-fill me-2"></i>現在、未納品の注文はありません。
+            </div>
+            {% else %}
+            <form method="POST" action="{{ url_for('delivered_page') }}" class="row g-3 align-items-end">
+                {{ form.hidden_tag() }}
+                <div class="col-md-4">
+                    <label class="form-label">最短出荷日 (未納品)</label>
+                    <input type="text" readonly class="form-control-plaintext" value="{{ min_ship_date.strftime('%Y-%m-%d') }}">
+                </div>
+                <div class="col-md-4">
+                    {{ form.end_date.label(class="form-label") }} <span class="badge bg-danger">必須</span>
+                    {{ form.end_date(class="form-control" + (" is-invalid" if form.end_date.errors else ""), value=end_date.strftime('%Y-%m-%d') if end_date else '') }}
+                    {% if form.end_date.errors %}
+                        <div class="invalid-feedback">{{ form.end_date.errors[0] }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    {{ form.submit(class="btn btn-primary w-100") }}
+                </div>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if orders_to_deliver %}
+    <form id="delivered-form" method="POST" action="{{ url_for('delivered_page') }}">
+        <input type="hidden" name="action" value="deliver">
+        <input type="hidden" name="end_date_hidden" value="{{ end_date.strftime('%Y-%m-%d') if end_date else '' }}">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">納品対象一覧</h5>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="select-all-checkbox" checked>
+                    <label class="form-check-label" for="select-all-checkbox">
+                        すべて選択
+                    </label>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>注文日</th>
+                                <th>商品ID</th>
+                                <th>商品名</th>
+                                <th>カラーID</th>
+                                <th>数量</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders_to_deliver %}
+                            <tr>
+                                <td><input class="form-check-input order-checkbox" type="checkbox" name="order_ids" value="{{ order.orderid }}" checked></td>
+                                <td>{{ order.orderdate.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ order.goodsid }}</td>
+                                <td>{{ order.goodsnm }}</td>
+                                <td>{{ colorid_connect_color(order.colorid)}}</td>
+                                <td>{{ order.quantity }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer text-end">
+                <span id="selection-info" class="me-3 text-muted"></span>
+                <button type="button" class="btn btn-success btn-lg" id="deliver-button" name="deliver-button" data-bs-toggle="modal" data-bs-target="#deliveredConfirmModal">
+                    <i class="bi bi-check-circle-fill me-2"></i><span id="selected-count">{{ orders_to_deliver|length }}</span> 件を納品済みにする
+                </button>
+            </div>
+        </div>
+    </form>
+    {% elif request.args.get('end_date') %}
+        <div class="alert alert-warning" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>指定された期間に該当する未納品の注文はありません。
+        </div>
+    {% endif %}
+</div>
+
+<!-- 確認モーダル -->
+<div class="modal fade" id="deliveredConfirmModal" tabindex="-1" aria-labelledby="deliveredConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deliveredConfirmModalLabel">納品処理の確認</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong><span id="modal-selected-count"></span>件</strong>の注文を納品済みに更新します。</p>
+        <p class="text-muted">対象期間: <strong id="modal-date-range"></strong></p>
+        <p>それぞれの注文商品の納品状態は、注文商品一覧から編集が行えます。</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+        <button type="button" class="btn btn-success" id="confirm-deliver-button">実行</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    function updateSelectionInfo() {
+        const selectedCount = $('.order-checkbox:checked').length;
+        const totalCount = $('.order-checkbox').length;
+        const minDate = "{{ min_ship_date.strftime('%Y-%m-%d') if min_ship_date else '' }}";
+        const endDate = "{{ end_date.strftime('%Y-%m-%d') if end_date else '' }}";
+
+        $('#selected-count').text(selectedCount);
+        $('#selection-info').text(`対象期間: ${minDate} ~ ${endDate}`);
+
+        if (selectedCount === 0) {
+            $('#deliver-button').prop('disabled', true).addClass('btn-secondary').removeClass('btn-success');
+        } else {
+            $('#deliver-button').prop('disabled', false).addClass('btn-success').removeClass('btn-secondary');
+        }
+
+        $('#select-all-checkbox').prop('checked', selectedCount === totalCount);
+    }
+
+    $('#select-all-checkbox').on('change', function() {
+        $('.order-checkbox').prop('checked', $(this).prop('checked'));
+        updateSelectionInfo();
+    });
+
+    $('.order-checkbox').on('change', function() {
+        updateSelectionInfo();
+    });
+
+    // 初期表示時にも情報を更新
+    updateSelectionInfo();
+
+    // モーダル表示前の処理
+    $('#deliver-button').on('click', function(e) {
+        const selectedCount = $('.order-checkbox:checked').length;
+        if (selectedCount === 0) {
+            alert('納品する注文が選択されていません。');
+            e.stopPropagation(); // モーダル表示を中止
+            return;
+        }
+        const minDate = "{{ min_order_date.strftime('%Y-%m-%d') if min_order_date else '' }}";
+        const endDate = "{{ end_date.strftime('%Y-%m-%d') if end_date else '' }}";
+        
+        $('#modal-selected-count').text(selectedCount);
+        $('#modal-date-range').text(`${minDate} ~ ${endDate}`);
+    });
+
+    // モーダルの実行ボタンクリックでフォームを送信
+    $('#confirm-deliver-button').on('click', function() {
+        $('#delivered-form').submit();
+    });
+});
+</script>
+{% endblock %}

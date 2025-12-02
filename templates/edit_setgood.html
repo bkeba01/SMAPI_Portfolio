@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{% block title %}
+セット商品編集 - 在庫管理システム
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h2 class="mb-0"><i class="bi bi-pencil-square me-2"></i>セット商品編集</h2>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted">セット商品の情報を編集します。</p>
+                    <hr>
+                    {# 変更点1: JavaScriptに渡すデータをHTMLのdata属性に埋め込む (データアイランド方式) #}
+                    {# これにより、JavaScriptコード内に直接Jinja2構文を埋め込むことによるエラーを回避 #}
+                    <div id="all-goods-data" data-goods='{{ goods_choices_json | safe }}' style="display: none;"></div>
+
+                    <form method="POST" action="{{ url_for('edit_setgood_page', setgood_id=setgood.goodsid) }}" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- 基本情報セクション -->
+                        <h4 class="mb-3">基本情報</h4>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="goodsid" class="form-label">{{ form.goodsid.label }} <span class="badge bg-danger">必須</span></label>
+                                <p class="form-text text-muted small mt-0 mb-1">このセット商品の「親」となる商品です。</p>
+                                {{ form.goodsid(class="form-control" + (" is-invalid" if form.goodsid.errors else ""), disabled=True) }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="fentuser" class="form-label">{{ form.fentuser.label }} <span class="badge bg-danger">必須</span></label>
+                                <p class="form-text text-muted small mt-0 mb-1">このセット商品を登録した担当者の名前です。</p>
+                                {{ form.fentuser(class="form-control" + (" is-invalid" if form.fentuser.errors else ""), placeholder="例：山田 太郎") }}
+                            </div>
+
+                            <div class="col-12">
+                                <label for="detail" class="form-label">{{ form.detail.label }} <span class="badge bg-secondary">任意</span></label>
+                                <p class="form-text text-muted small mt-0 mb-1">このセット商品の特徴や注意点などを自由に入力できます。</p>
+                                {{ form.detail(class="form-control", placeholder="例：夏限定の特別セットです。", style="height: 100px") }}
+                            </div>
+                             <div class="col-12">
+                                <div class="form-check form-switch">
+                                    {{ form.useflg(class="form-check-input") }}
+                                    <label class="form-check-label" for="useflg">{{ form.useflg.label }}</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- セット商品構成セクション -->
+                        <h4 class="mb-3">セット商品構成</h4>
+                        <p class="form-text text-muted small mt-0 mb-2">親商品に含まれる「子」商品を選択してください。最低1つは必須です。</p>
+
+                        <div id="set-goods-composition-container">
+                            {% for i in range(1, 11) %}
+                            <div class="card mb-3 set-good-item" id="set-good-item-{{ i }}" {% if not getattr(setgood, 'sgid' ~ i) %}style="display: none;"{% endif %}>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5><span class="badge bg-light text-dark">構成商品 {{i}}</span></h5>
+                                        {% if i > 1 %}
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-set-good-item" data-item-index="{{ i }}">
+                                            <i class="bi bi-dash-circle"></i> 削除
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                    <div class="row g-3 align-items-center">
+                                        <div class="col-12">
+                                            <div class="form-check">
+                                                {{ form['scolorid_check' + i|string](class="form-check-input scolorid-checkbox", data_index=i) }}
+                                                <label class="form-check-label" for="{{ 'scolorid_check' + i|string }}">{{ form['scolorid_check' + i|string].label }}</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="{{ 'sgid' + i|string }}" class="form-label">
+                                                {{ form['sgid' + i|string].label }}
+                                                {% if i == 1 %}<span class="badge bg-danger">必須</span>{% else %}<span class="badge bg-secondary optional-badge">任意</span>{% endif %}
+                                            </label>
+                                            {% set field = form['sgid' + i|string] %}
+                                            {{ field(class="form-control sgid-search", data_index=i) }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="scolorid-select-wrapper" id="scolorid-select-wrapper-{{ i }}" style="display: none;">
+                                                <label for="{{ 'scolorid' + i|string }}" class="form-label">カラー</label>
+                                                {{ form['scolorid' + i|string](class="form-control scolorid-select", data_index=i, data_initial_value=getattr(setgood, 'scolorid' ~ i) or '') }}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="{{ 'snum' + i|string }}" class="form-label">{{ form['snum' + i|string].label }}</label>
+                                            {{ form['snum' + i|string](class="form-control", type="number", min="1") }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="{{ 'sgdetail' + i|string }}" class="form-label">{{ form['sgdetail' + i|string].label }}</label>
+                                            {{ form['sgdetail' + i|string](class="form-control", placeholder="特記事項") }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <button type="button" class="btn btn-outline-primary mt-3" id="add-set-good-item">
+                            <i class="bi bi-plus-circle"></i> 構成商品を追加
+                        </button>
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-warning btn-lg"><i class="bi bi-check-circle-fill me-2"></i>更新する</button>
+                            <a href="{{ url_for('setgoods_list_page') }}" class="btn btn-secondary"><i class="bi bi-arrow-left-circle me-2"></i>一覧に戻る</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // 変更点4: データアイランドからJSON文字列を取得し、JavaScriptオブジェクトに変換
+    const goodsDataElement = document.getElementById('all-goods-data');
+    const allGoods = JSON.parse(goodsDataElement.dataset.goods);
+
+    function initializeSelect2(selector, placeholder, data) {
+        const options = {
+            placeholder: placeholder,
+            allowClear: true,
+            language: "ja"
+        };
+        if (data) {
+            options.data = data;
+        }
+        $(selector).select2(options);
+    }
+
+    // 初期化
+    initializeSelect2('#goodsid', "商品を選択してください");
+    initializeSelect2('.sgid-search', "構成商品を選択してください"); // データはPython側で設定済み
+    initializeSelect2('.scolorid-select', "カラーを選択してください");
+
+    let visibleItemCount = 0;
+    $('.set-good-item').each(function() {
+        if ($(this).is(':visible')) {
+            visibleItemCount++;
+        }
+    });
+
+    if (visibleItemCount >= 10) {
+        $('#add-set-good-item').hide();
+    }
+
+    $('#add-set-good-item').on('click', function() {
+        if (visibleItemCount < 10) {
+            visibleItemCount++;
+            const nextItem = $(`#set-good-item-${visibleItemCount}`);
+            nextItem.show();
+            // 変更点5: 新しく追加されたsgid-searchの初期化時にallGoodsデータを渡す
+            const initialData = allGoods.map(function(item) { return {id: item[0], text: item[1]}; });
+            initializeSelect2(nextItem.find('.sgid-search'), "構成商品を選択してください", initialData);
+            initializeSelect2(nextItem.find('.scolorid-select'), "カラーを選択してください");
+        }
+        if (visibleItemCount === 10) {
+            $(this).hide();
+        }
+    });
+
+    $(document).on('click', '.remove-set-good-item', function() {
+        const itemIndex = $(this).data('index');
+        const itemToRemove = $(`#set-good-item-${itemIndex}`);
+        
+        itemToRemove.hide();
+        itemToRemove.find('.sgid-search, .scolorid-select').val(null).trigger('change');
+        itemToRemove.find('input[type="number"]').val(1);
+        itemToRemove.find('textarea').val('');
+        itemToRemove.find('.scolorid-checkbox').prop('checked', false);
+        itemToRemove.find('.scolorid-select-wrapper').hide();
+
+        visibleItemCount--;
+        $('#add-set-good-item').show();
+    });
+
+    function fetchColors(goodsid, colorSelect, selectedColor) {
+        if (goodsid) {
+            $.ajax({
+                url: `/api/get_colors/${goodsid}`,
+                type: 'GET',
+                success: function(data) {
+                    const select2Data = data.colors.map(function(c) { return { id: c.id, text: c.text }; });
+                    
+                    // 変更点6: select2のインスタンスが存在すれば破棄し、新しいデータで再初期化
+                    if (colorSelect.data('select2')) {
+                        colorSelect.select2('destroy');
+                    }
+
+                    colorSelect.empty().select2({
+                        placeholder: 'カラーを選択',
+                        data: select2Data,
+                        allowClear: true,
+                        language: "ja"
+                    });
+                    
+                    if (selectedColor) {
+                        colorSelect.val(selectedColor).trigger('change');
+                    } else {
+                        colorSelect.val(null).trigger('change');
+                    }
+
+                    if (select2Data.length > 0) {
+                        colorSelect.closest('.scolorid-select-wrapper').show();
+                    } else {
+                        colorSelect.closest('.scolorid-select-wrapper').hide();
+                    }
+                },
+                error: function() {
+                    console.error("Failed to fetch colors.");
+                    colorSelect.closest('.scolorid-select-wrapper').hide();
+                }
+            });
+        } else {
+            // 変更点7: goodsidがない場合でもカラー選択欄を非表示にせず、選択を促すメッセージを表示
+            if (colorSelect.data('select2')) {
+                colorSelect.select2('destroy');
+            }
+            colorSelect.empty().select2({
+                placeholder: '先に商品を選択',
+                data: [],
+                allowClear: true,
+                language: "ja"
+            });
+        }
+    }
+
+    // 編集ページ読み込み時の初期設定
+    $('.scolorid-checkbox').each(function() {
+        const index = $(this).data('index');
+        const goodsid = $(`#sgid${index}`).val();
+        const selectedColor = $(`#scolorid${index}`).data('initial-value');
+
+        if (this.checked) {
+            $(`#scolorid-select-wrapper-${index}`).show();
+            if (goodsid) {
+                fetchColors(goodsid, $(`#scolorid${index}`), selectedColor);
+            }
+        }
+    });
+
+    $(document).on('change', '.scolorid-checkbox', function() {
+        const index = $(this).data('index');
+        const sgidSelect = $(`#sgid${index}`);
+        const colorSelectWrapper = $(`#scolorid-select-wrapper-${index}`);
+        const colorSelect = $(`#scolorid${index}`);
+        const previouslySelectedGoodsid = sgidSelect.val(); // Capture value before clearing
+
+        // 変更点8: select2のインスタンスが存在すれば破棄し、新しいデータで再初期化
+        if (sgidSelect.data('select2')) {
+            sgidSelect.select2('destroy');
+        }
+        sgidSelect.empty();
+
+        if (this.checked) {
+            $.ajax({
+                url: '/api/get_goods_from_arrival',
+                type: 'GET',
+                success: function(data) {
+                    const select2Data = data.goods.map(function(g) { return { id: g.id, text: g.text }; });
+                    initializeSelect2(sgidSelect, "構成商品を選択してください", select2Data);
+                    // 変更点9: AJAX完了後にsgidSelectの選択をリセット
+                    sgidSelect.val(null).trigger('change');
+                },
+                error: function() {
+                    console.error("Failed to fetch goods from arrival.");
+                    initializeSelect2(sgidSelect, "構成商品を選択してください", []);
+                    sgidSelect.val(null).trigger('change');
+                }
+            });
+            colorSelectWrapper.show();
+            // If a product was selected before, fetch its colors
+            if (previouslySelectedGoodsid) {
+                fetchColors(previouslySelectedGoodsid, colorSelect);
+            }
+        } else {
+            // 変更点10: チェックがOFFの場合、全商品リストを復元
+            const initialData = allGoods.map(function(item) { return {id: item[0], text: item[1]}; });
+            initializeSelect2(sgidSelect, "構成商品を選択してください", initialData);
+            colorSelectWrapper.hide();
+            colorSelect.val(null).trigger('change');
+            sgidSelect.val(null).trigger('change');
+        }
+    });
+
+    // 変更点11: sgid-searchのchangeイベントをselect2:selectイベントに変更
+    // select2を使用しているドロップダウンの変更を正確に検知するため
+    $(document).on('select2:select', '.sgid-search', function(e) {
+        const index = $(this).data('index');
+        // select2:selectイベントでは、選択されたデータがe.params.dataに含まれる
+        const goodsid = e.params.data.id;
+        const colorCheckbox = $(`#scolorid_check${index}`);
+        const colorSelect = $(`#scolorid${index}`);
+
+        if (colorCheckbox.is(':checked')) 
+        {
+            fetchColors(goodsid, colorSelect);
+        }
+    });
+});
+</script>
+{% endblock %}

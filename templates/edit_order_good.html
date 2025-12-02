@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}
+注文商品編集 - 在庫管理システム
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h2 class="mb-0"><i class="bi bi-pencil-fill me-2"></i>注文商品編集</h2>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <strong>注文ID:</strong> {{ order_good.orderid }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>注文日:</strong> {{ order_good.orderdate.strftime('%Y-%m-%d') if order_good.orderdate }}
+                    </div>
+                    <hr>
+                    <form method="POST" action="{{ url_for('edit_order_good_page', orderid=order_good.orderid) }}" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                {{ form.goodsid.label(class="form-label") }} <span class="badge bg-danger">必須</span>
+                                {{ form.goodsid(class="form-control" + (" is-invalid" if form.goodsid.errors else "")) }}
+                                {% if form.goodsid.errors %}
+                                    <div class="invalid-feedback">{{ form.goodsid.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                {{ form.goodsnm.label(class="form-label") }}
+                                {{ form.goodsnm(class="form-control" + (" is-invalid" if form.goodsnm.errors else ""), placeholder="商品IDを選択すると自動入力されます", readonly=True) }}
+                                {% if form.goodsnm.errors %}
+                                    <div class="invalid-feedback">{{ form.goodsnm.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                {{ form.colorid.label(class="form-label") }}
+                                {{ form.colorid(class="form-control" + (" is-invalid" if form.colorid.errors else "")) }}
+                                {% if form.colorid.errors %}
+                                    <div class="invalid-feedback">{{ form.colorid.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-12">
+                                {{ form.detail.label(class="form-label") }}
+                                {{ form.detail(class="form-control", style="height: 100px") }}
+                            </div>
+
+                            <div class="col-md-6">
+                                {{ form.quantity.label(class="form-label") }} <span class="badge bg-danger">必須</span>
+                                {{ form.quantity(class="form-control" + (" is-invalid" if form.quantity.errors else ""), type="number", min="1") }}
+                                {% if form.quantity.errors %}
+                                    <div class="invalid-feedback">{{ form.quantity.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                {{ form.fupdteuser.label(class="form-label") }} <span class="badge bg-danger">必須</span>
+                                {{ form.fupdteuser(class="form-control" + (" is-invalid" if form.fupdteuser.errors else "")) }}
+                                {% if form.fupdteuser.errors %}
+                                    <div class="invalid-feedback">{{ form.fupdteuser.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    {{ form.shipflg(class="form-check-input", role="switch", id="shipflg") }}
+                                    {{ form.shipflg.label(class="form-check-label", for="shipflg") }}
+                                </div>
+                            </div>
+                            <div class="col-md-6" id="shipdate-div" style="display: none;">
+                                {{ form.shipdate.label(class="form-label") }}
+                                {{ form.shipdate(class="form-control") }}
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    {{ form.deliveredflg(class="form-check-input", role="switch", id="deliveredflg") }}
+                                    {{ form.deliveredflg.label(class="form-check-label", for="deliveredflg") }}
+                                </div>
+                            </div>
+                            <div class="col-md-6" id="delivereddate-div" style="display: none;">
+                                {{ form.delivereddate.label(class="form-label") }}
+                                {{ form.delivereddate(class="form-control") }}
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            {{ form.submit(class="btn btn-success btn-lg", value="更新する") }}
+                            <a href="{{ url_for('order_goods_list_page') }}" class="btn btn-secondary"><i class="bi bi-arrow-left-circle me-2"></i>一覧に戻る</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Select2初期化
+    $('#goodsid').select2({ placeholder: "商品を選択してください", allowClear: true });
+    $('#colorid').select2({ placeholder: "カラーを選択してください", allowClear: true });
+
+    // 商品ID変更時に商品名を自動入力
+    $('#goodsid').on('change', function() {
+        var selectedGoodsid = $(this).val();
+        if (selectedGoodsid) {
+            var selectedText = $(this).find('option:selected').text();
+            var goodsnm = selectedText.split(': ')[1];
+            $('#goodsnm').val(goodsnm);
+        } else {
+            $('#goodsnm').val('');
+        }
+    });
+
+    // 出荷日フィールドの表示/非表示を制御する関数
+    function toggleShipDateField() {
+        if ($('#shipflg').is(':checked')) {
+            $('#shipdate-div').show();
+        } else {
+            $('#shipdate-div').hide();
+            $('#shipdate').val(''); // 非表示になったら値をクリア
+        }
+    }
+
+    // 配送日フィールドの表示/非表示を制御する関数
+    function toggleDeliveredDateField() {
+        if ($('#deliveredflg').is(':checked')) {
+            $('#delivereddate-div').show();
+        } else {
+            $('#delivereddate-div').hide();
+            $('#delivereddate').val(''); // 非表示になったら値をクリア
+        }
+    }
+
+    // 出荷フラグの変更を監視
+    $('#shipflg').on('change', function() {
+        toggleShipDateField();
+    });
+
+    // 配送フラグの変更を監視
+    $('#deliveredflg').on('change', function() {
+        toggleDeliveredDateField();
+    });
+
+    // ページ読み込み時に初期状態を設定
+    toggleShipDateField();
+    toggleDeliveredDateField();
+});
+</script>
+{% endblock %}

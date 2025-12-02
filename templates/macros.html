@@ -1,0 +1,9 @@
+{% macro render_checkbox_with_data_index(field, index) %}
+    <input type="checkbox"
+           class="{{ field.class }}"
+           id="{{ field.id }}"
+           name="{{ field.name }}"
+           value="{{ field.value }}"
+           data-index="{{ index }}"
+           {% if field.checked %}checked{% endif %}>
+{% endmacro %}
