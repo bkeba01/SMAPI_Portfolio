@@ -1,4 +1,4 @@
-# SMAPI Portfolio - 在庫管理システム
+# 在庫管理システム(ポートフォリオ版)
 
 Flask + SQLAlchemyを使用した在庫・販売管理システムのポートフォリオ版です。
 
@@ -14,7 +14,6 @@ Flask + SQLAlchemyを使用した在庫・販売管理システムのポート�
 - 顧客情報の管理
 - 注文情報の管理
 - データの検索・フィルタリング
-- 在庫・売上分析
 
 ## 技術スタック
 
@@ -23,7 +22,6 @@ Flask + SQLAlchemyを使用した在庫・販売管理システムのポート�
 - **ORM**: SQLAlchemy 2.0
 - **フォーム処理**: WTForms
 - **キャッシュ**: Flask-Caching
-- **データ分析**: Pandas, NumPy, Matplotlib
 
 ## セットアップ手順
 
