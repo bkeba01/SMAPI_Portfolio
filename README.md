@@ -2,11 +2,11 @@
 
 Flask + SQLAlchemyを使用した在庫・販売管理システムのポートフォリオ版です。
 
-## デモ動画(48秒) 
+## デモ動画(54秒) 
 
 いくつかの機能の操作を行ったデモ動画です。ファイルサイズの関係上、再生速度を調整しています。
 
-https://github.com/user-attachments/assets/5c6e13d0-60e7-4cec-a735-4777784ab5fd
+[https://github.com/user-attachments/assets/5c6e13d0-60e7-4cec-a735-4777784ab5fd](https://github.com/user-attachments/assets/ff419dd6-7fdd-405a-aad5-048e803834aa)
 
 ## 概要
 
